@@ -1,9 +1,10 @@
 import numpy as np
 import cv2
 import copy
+import os
+import time
 
-
-cap = cv2.VideoCapture("rtsp://admin:admin@192.168.88.97/media/video1") #"rtsp://admin:admin@192.168.88.97/media/video1"
+cap = cv2.VideoCapture(0) #"rtsp://admin:admin@192.168.88.97/media/video1") #"rtsp://admin:admin@192.168.88.97/media/video1"
 
 if not cap.isOpened():
 	print("Error opening video stream or file")
@@ -18,6 +19,10 @@ video_out = cv2.VideoWriter('heatmap_video.avi', cv2.VideoWriter_fourcc(*'mjpg')
 background_subtractor = cv2.createBackgroundSubtractorMOG2()
 
 first_iteration_indicator = 1
+
+i=0
+
+oldtime = time.time()
 
 while(cap.isOpened()):
     # Capture frame-by-frame
@@ -39,15 +44,31 @@ while(cap.isOpened()):
         maxValue = 2
         ret, th1 = cv2.threshold(filter, threshold, maxValue, cv2.THRESH_BINARY)
 
+
         accum_image = cv2.add(accum_image, th1)
 
         color_image_video = cv2.applyColorMap(accum_image, cv2.COLORMAP_HOT)
 
         video_frame = cv2.addWeighted(frame, 0.5, color_image_video, 0.5, 0) #0.7
 
-        #name = "./frames/frame%d.jpg" % i
-        #cv2.imwrite(name, video_frame)
-        
+
+        if not os.path.exists('frames'):
+            os.makedirs('frames')
+
+
+  
+        if time.time() - oldtime > 1:
+            #print("it's been a second")
+            name = "./frames/frame%d.jpg" % i
+            cv2.imwrite(name, video_frame)
+            oldtime = time.time()
+
+            i = i+1
+            if (i>200): #circular, up to 200 images
+                i=0
+
+
+
         video_out.write(video_frame)
         
         # Display the resulting frame
@@ -55,7 +76,7 @@ while(cap.isOpened()):
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+    
 # Function that generates a heatmap of most recent 5 minutes of frames
 
 # Function that generates a heatmap of most recent 10 minutes of frames
