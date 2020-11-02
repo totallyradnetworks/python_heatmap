@@ -1,12 +1,16 @@
 #parameters
 #thDivider :the longer the video, the higher this value should be. to make each "movement" less important
 
+
 import numpy as np
 import cv2
 import copy
 import os
 import time
-#from matplotlib import pyplot as plt
+
+#PARAMETER
+VideoOutSpeedup=1.0 #1.5 will result in faster video. Better for reviewing
+
 
 
 def main():
@@ -15,13 +19,12 @@ def main():
     if not cap.isOpened():
         print("Error opening video stream or file")
 
-    #done below in a cooler way
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     FPS = int(cap.get(cv2.CAP_PROP_FPS))
 
 
-    video_out = cv2.VideoWriter('heatmap_video.avi', cv2.VideoWriter_fourcc(*'mjpg'), 10.0, (width, height))
+    video_out = cv2.VideoWriter('heatmap_video.avi', cv2.VideoWriter_fourcc(*'mjpg'), FPS*VideoOutSpeedup, (width, height))
                 
 
     background_subtractor = cv2.createBackgroundSubtractorMOG2()
@@ -57,7 +60,6 @@ def main():
         if first_iteration_indicator == 1:
 
             first_frame = copy.deepcopy(img)
-            #height, width = frame.shape[:2]
             accum_image = np.zeros((height, width), np.uint8)
             first_iteration_indicator = 0
 
@@ -69,7 +71,6 @@ def main():
             maxValue = 2
 
             blur = cv2.GaussianBlur(filter,(5,5),0)
-
             ret, th1 = cv2.threshold(blur, threshold, maxValue, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
             if not os.path.exists('frames'):
@@ -115,9 +116,6 @@ def main():
             
             # Display the resulting frame
             cv2.imshow('frame',video_frame)
-
-    #plt.subplot(2,2,i+1),plt.imshow(images[i],'gray')
-    #  plt.title(titles[i])
 
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
